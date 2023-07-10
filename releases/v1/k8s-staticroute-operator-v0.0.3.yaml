@@ -53,9 +53,12 @@ spec:
                 description: Gateway to route through (required)
                 pattern: ^([0-9]{1,3}\.){3}[0-9]{1,3}$
                 type: string
+              clusterservice:
+                description: ClusterService to route through (required)
+                pattern: ^.*$
+                type: string
             required:
             - destinations
-            - gateway
             type: object
           status:
             type: object
@@ -158,7 +161,8 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        image: digitalocean/k8s-staticroute-operator:v1.0.0
+        image: ghcr.io/jasper-186/k8s-staticroute-operator:v0.0.3
+        #image: digitalocean/k8s-staticroute-operator:v1.0.0
         imagePullPolicy: Always
         name: k8s-staticroute-operator
         resources:
