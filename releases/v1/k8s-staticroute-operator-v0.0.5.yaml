@@ -161,7 +161,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        image: ghcr.io/jasper-186/k8s-staticroute-operator:v0.0.3
+        image: ghcr.io/jasper-186/k8s-staticroute-operator:v0.0.5
         #image: digitalocean/k8s-staticroute-operator:v1.0.0
         imagePullPolicy: Always
         name: k8s-staticroute-operator
