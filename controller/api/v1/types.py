@@ -65,7 +65,7 @@ class StaticRoute(OpenAPIV3Schema):
     clusterservice: str = field(
         metadata=schema(
             description="ClusterService to route through (required (unless using Gateway) )",
-            example="wireguard.namespace<.svc.cluster.local>",
+            #example="wireguard.namespace<.svc.cluster.local>",
             pattern="^([a-z0-9\.]+)$",
         )
     )
