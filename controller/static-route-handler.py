@@ -110,11 +110,16 @@ def process_static_routes(routes, operation, event_ctx=None, logger=None):
 def create_fn(body, spec, logger, **_):
     destinations = spec.get("destinations", [])
     gateway = spec["gateway"]
-
-    if (gateway == ""):
+    message = f"create_fn - dest: {destinations}, gateway: {gateway}!"
+    logger.info(message)
+    if not gateway:
         try:
+            message = f"gateway is false: {gateway} attempting to resolve clusterservice"
+            logger.info(message)    
             gateway = socket.gethostbyname(spec["clusterservice"])
         except socket.gaierror as e:
+            message = f"Exception resolving service ip: {e}"
+            logger.error(message)    
             print(f'Invalid hostname, error raised is {e}')
             gateway=DEFAULT_GW_CIDR
     
