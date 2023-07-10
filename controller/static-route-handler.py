@@ -59,6 +59,10 @@ def process_static_routes(routes, operation, event_ctx=None, logger=None):
     status = []
 
     for route in routes:
+        dest=route["destination"]
+        gate=route["gateway"]
+        message = f"processing route {dest} via {gate}!"
+        logger.info(message)
         operation_succeeded, message = manage_static_route(
             operation=operation,
             destination=route["destination"],
