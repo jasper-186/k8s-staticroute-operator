@@ -113,9 +113,10 @@ def process_static_routes(routes, operation, event_ctx=None, logger=None):
 @kopf.on.create(StaticRoute.__group__, StaticRoute.__version__, StaticRoute.__name__)
 def create_fn(body, spec, logger, **_):
     destinations = spec.get("destinations", [])
-    gateway = spec["gateway"]
-    message = f"create_fn - dest: {destinations}, gateway: {gateway}!"
-    logger.info(message)
+    gateway = None
+    if spec.has_key("gateway"):
+        gateway=spec["gateway"]
+
     if not gateway:
         try:
             message = f"gateway is false: {gateway} attempting to resolve clusterservice"
