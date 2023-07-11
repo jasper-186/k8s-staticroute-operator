@@ -120,7 +120,7 @@ def create_fn(body, spec, logger, **_):
     if not gateway:
         try:
             clusterservice=spec["clusterservice"]
-            message = f"gateway is false: {gateway} attempting to resolve {clusterservice}"
+            message = f"gateway is empty, attempting to resolve { clusterservice }"
             logger.info(message)    
             
             if not clusterservice:
