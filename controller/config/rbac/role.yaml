@@ -26,3 +26,8 @@ rules:
   - apiGroups: [networking.digitalocean.com]
     resources: [staticroutes]
     verbs: [list, watch, patch]
+
+  # Application: list services for IP lookup
+  - apiGroups: [""]
+    resources: [services]
+    verbs: [list, watch, get]

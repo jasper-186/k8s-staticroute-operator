@@ -7,7 +7,7 @@ from constants import ROUTE_EVT_MSG
 from constants import ROUTE_READY_MSG
 from constants import ROUTE_NOT_READY_MSG
 from utils import valid_ip_address
-import socket
+from kubernetes import client, config
 
 
 # =================================== Static route management ===========================================
@@ -119,10 +119,29 @@ def create_fn(body, spec, logger, **_):
 
     if not gateway:
         try:
-            message = f"gateway is false: {gateway} attempting to resolve clusterservice"
+            clusterservice=spec["clusterservice"]
+            message = f"gateway is false: {gateway} attempting to resolve {clusterservice}"
             logger.info(message)    
-            gateway = socket.gethostbyname(spec["clusterservice"])
-        except socket.gaierror as e:
+            
+            if not clusterservice:
+                kopf.exception(
+                    Exception("clusterservice cannot be empty if gateway is empty"),
+                    message="clusterservice cannot be empty if gateway is empty",
+                )
+                return (False, "Failed to apply static route, see log for issues")
+            
+            config.load_incluster_config()
+            api=client.CoreV1Api()
+            svc_wireguard=api.list_service_for_all_namespaces(field_selector=f"metadata.name=={clusterservice}")
+            if not svc_wireguard or not svc_wireguard.items or svc_wireguard.items.len() == 0: 
+                kopf.exception(
+                    Exception(f"ClusterService {clusterservice} cannot be resolved"),
+                    message=f"Failed to find {clusterservice} in the cluster",
+                )
+                return (False, "Failed to apply static route, see log for issues")
+                
+            gateway = svc_wireguard.items[0].spec.cluster_ip
+        except client.exceptions.ApiException as e:
             message = f"Exception resolving service ip: {e}"
             logger.error(message)    
             print(f'Invalid hostname, error raised is {e}')
