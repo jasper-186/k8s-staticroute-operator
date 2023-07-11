@@ -114,7 +114,7 @@ def process_static_routes(routes, operation, event_ctx=None, logger=None):
 def create_fn(body, spec, logger, **_):
     destinations = spec.get("destinations", [])
     gateway = None
-    if spec.has_key("gateway"):
+    if "gateway" in spec:
         gateway=spec["gateway"]
 
     if not gateway:
