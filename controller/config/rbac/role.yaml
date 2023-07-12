@@ -27,7 +27,14 @@ rules:
     resources: [staticroutes]
     verbs: [list, watch, patch]
 
-  # Application: list services for IP lookup
   - apiGroups: [""]
-    resources: [services]
+    resources: [pods]
     verbs: [list, watch, get]
+  
+  # - apiGroups: [""]
+  #   resources: [services]
+  #   verbs: [list, watch, get]
+    
+  # - apiGroups: [extensions,apps]
+  #   resources: [deployments,replicasets]
+  #   verbs: [list, watch, get]

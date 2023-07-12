@@ -132,17 +132,19 @@ def create_fn(body, spec, logger, **_):
             
             config.load_incluster_config()
             api=client.CoreV1Api()
-            svc_wireguard=api.list_service_for_all_namespaces(field_selector=f"metadata.name=={clusterservice}")
-            if not svc_wireguard or not svc_wireguard.items or len(svc_wireguard.items) == 0: 
+            pod_wireguard=api.list_pod_for_all_namespaces(label_selector=f"app=={clusterservice}")
+            if not pod_wireguard or not pod_wireguard.items or len(pod_wireguard.items) == 0: 
                 kopf.exception(
                     Exception(f"ClusterService {clusterservice} cannot be resolved"),
                     message=f"Failed to find {clusterservice} in the cluster",
                 )
                 return (False, "Failed to apply static route, see log for issues")
-            elif len(svc_wireguard.items) >= 0: 
+            elif len(pod_wireguard.items) >= 0: 
                 logger.warn(f"Multiple Services for {clusterservice} taking first in list")
 
-            gateway = svc_wireguard.items[0].spec.cluster_ip
+            # Route the traffic for the network to the Pods IP (which the node has a route for)
+            gateway = pod_wireguard.items[0].status.pod_ip
+
         except client.exceptions.ApiException as e:
             message = f"Exception resolving service ip: {e}"
             logger.error(message)    
