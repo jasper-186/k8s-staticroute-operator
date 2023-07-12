@@ -115,41 +115,10 @@ def create_fn(body, spec, logger, **_):
     destinations = spec.get("destinations", [])
     gateway = None
     if "gateway" in spec:
-        gateway=spec["gateway"]
+        gateway = spec["gateway"]
 
     if not gateway:
-        try:
-            clusterservice=spec["clusterservice"]
-            message = f"gateway is empty, attempting to resolve { clusterservice }"
-            logger.info(message)    
-            
-            if not clusterservice:
-                kopf.exception(
-                    Exception("clusterservice cannot be empty if gateway is empty"),
-                    message="clusterservice cannot be empty if gateway is empty",
-                )
-                return (False, "Failed to apply static route, see log for issues")
-            
-            config.load_incluster_config()
-            api=client.CoreV1Api()
-            pod_wireguard=api.list_pod_for_all_namespaces(label_selector=f"app=={clusterservice}")
-            if not pod_wireguard or not pod_wireguard.items or len(pod_wireguard.items) == 0: 
-                kopf.exception(
-                    Exception(f"ClusterService {clusterservice} cannot be resolved"),
-                    message=f"Failed to find {clusterservice} in the cluster",
-                )
-                return (False, "Failed to apply static route, see log for issues")
-            elif len(pod_wireguard.items) >= 0: 
-                logger.warn(f"Multiple Services for {clusterservice} taking first in list")
-
-            # Route the traffic for the network to the Pods IP (which the node has a route for)
-            gateway = pod_wireguard.items[0].status.pod_ip
-
-        except client.exceptions.ApiException as e:
-            message = f"Exception resolving service ip: {e}"
-            logger.error(message)    
-            print(f'Invalid hostname, error raised is {e}')
-            gateway=DEFAULT_GW_CIDR
+        gateway = resolve_gateway(spec,logger)
     
     routes_to_add_spec = [
         {"destination": destination, "gateway": gateway} for destination in destinations
@@ -169,8 +138,20 @@ def create_fn(body, spec, logger, **_):
 
 @kopf.on.update(StaticRoute.__group__, StaticRoute.__version__, StaticRoute.__name__)
 def update_fn(body, old, new, logger, **_):
-    old_gateway = old["spec"]["gateway"]
-    new_gateway = new["spec"]["gateway"]
+    old_gateway = None
+    if "gateway" in old["spec"]:
+        old_gateway = old["spec"]["gateway"]
+        
+    if not old_gateway:
+        old_gateway = resolve_gateway(old["spec"],logger)
+
+    new_gateway = None
+    if "gateway" in new["spec"]:
+        new_gateway = new["spec"]["gateway"]
+
+    if not new_gateway:
+        new_gateway = resolve_gateway(new["spec"],logger)
+    
     old_destinations = old["spec"].get("destinations", [])
     new_destinations = new["spec"].get("destinations", [])
     destinations_to_delete = list(set(old_destinations) - set(new_destinations))
@@ -205,7 +186,13 @@ def update_fn(body, old, new, logger, **_):
 @kopf.on.delete(StaticRoute.__group__, StaticRoute.__version__, StaticRoute.__name__)
 def delete(body, spec, logger, **_):
     destinations = spec.get("destinations", [])
-    gateway = spec["gateway"]
+    gateway = None
+    if "gateway" in spec:
+        gateway = spec["gateway"]
+
+    if not gateway:
+        gateway = resolve_gateway(spec,logger)
+    
     routes_to_delete_spec = [
         {"destination": destination, "gateway": gateway} for destination in destinations
     ]
@@ -213,3 +200,44 @@ def delete(body, spec, logger, **_):
     return process_static_routes(
         routes=routes_to_delete_spec, operation="del", event_ctx=body, logger=logger
     )
+
+def resolve_gateway(spec, logger):
+    gateway = None
+    if "gateway" in spec:
+        gateway=spec["gateway"]
+
+    if not gateway:
+        try:
+            deploymentlabel=spec["deploymentlabel"]
+            message = f"gateway is empty, attempting to resolve { deploymentlabel }"
+            logger.info(message)    
+            
+            if not deploymentlabel:
+                kopf.exception(
+                    Exception("deploymentlabel cannot be empty if gateway is empty"),
+                    message="deploymentlabel cannot be empty if gateway is empty",
+                )
+                return (False, "Failed to apply static route, see log for issues")
+            
+            config.load_incluster_config()
+            api=client.CoreV1Api()
+            pod_wireguard=api.list_pod_for_all_namespaces(label_selector=f"app=={deploymentlabel}")
+            if not pod_wireguard or not pod_wireguard.items or len(pod_wireguard.items) == 0: 
+                kopf.exception(
+                    Exception(f"deploymentlabel {deploymentlabel} cannot be resolved"),
+                    message=f"Failed to find {deploymentlabel} in the cluster",
+                )
+                return (False, "Failed to apply static route, see log for issues")
+            elif len(pod_wireguard.items) >= 0: 
+                logger.warn(f"Multiple Services for {deploymentlabel} taking first in list")
+
+            # Route the traffic for the network to the Pods IP (which the node has a route for)
+            gateway = pod_wireguard.items[0].status.pod_ip
+
+        except client.exceptions.ApiException as e:
+            message = f"Exception resolving service ip: {e}"
+            logger.error(message)    
+            print(f'Invalid hostname, error raised is {e}')
+            gateway=DEFAULT_GW_CIDR
+    
+    return gateway

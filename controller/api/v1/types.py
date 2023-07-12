@@ -38,11 +38,11 @@ class StaticRoute(OpenAPIV3Schema):
             "jsonPath": ".spec.gateway",
         },
         {
-            "name": "ClusterService",
+            "name": "DeploymentLabel",
             "type": "string",
             "priority": 1,
-            "description": "Cluster Service to route to (i.e. wireguard service)",
-            "jsonPath": ".spec.clusterservice",
+            "description": "Label to discover deployment pods to route through instead of a dedicated Gateway",
+            "jsonPath": ".spec.deploymentlabel",
         },
     ]
 
@@ -58,14 +58,13 @@ class StaticRoute(OpenAPIV3Schema):
     )
     gateway: str = field(
         metadata=schema(
-            description="Gateway to route through (required (unless using ClusterService) )",
+            description="Gateway to route through",
             pattern="^([0-9]{1,3}\.){3}[0-9]{1,3}$",
         )
     )
-    clusterservice: str = field(
+    deploymentlabel: str = field(
         metadata=schema(
-            description="ClusterService to route through (required (unless using Gateway) )",
-            #example="wireguard.namespace<.svc.cluster.local>",
+            description="Label to discover deployment pods to route through instead of a dedicated Gateway",
             pattern="^([a-z0-9\.]+)$",
         )
     )
