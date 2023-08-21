@@ -59,44 +59,47 @@ def process_static_routes(routes, operation, event_ctx=None, logger=None):
     status = []
 
     for route in routes:
-        dest=route["destination"]
-        gate=route["gateway"]
-        message = f"processing route {dest} via {gate}!"
-        logger.info(message)
-        operation_succeeded, message = manage_static_route(
-            operation=operation,
-            destination=route["destination"],
-            gateway=route["gateway"],
-            logger=logger,
-        )
+       try:
+           dest=route["destination"]
+            gate=route["gateway"]
+            message = f"processing route {dest} via {gate}!"
+            logger.info(message)
+            operation_succeeded, message = manage_static_route(
+                operation=operation,
+                destination=route["destination"],
+                gateway=route["gateway"],
+                logger=logger,
+            )
 
-        if not operation_succeeded:
+            if not operation_succeeded:
+                status.append(
+                    {
+                        "destination": route["destination"],
+                        "gateway": route["gateway"],
+                        "status": ROUTE_NOT_READY_MSG,
+                    }
+                )
+                if event_ctx is not None:
+                    kopf.exception(
+                        event_ctx,
+                        reason=ROUTE_EVT_MSG[operation]["failure"],
+                        message=message,
+                    )
+                continue
+
             status.append(
                 {
                     "destination": route["destination"],
                     "gateway": route["gateway"],
-                    "status": ROUTE_NOT_READY_MSG,
+                    "status": ROUTE_READY_MSG,
                 }
             )
             if event_ctx is not None:
-                kopf.exception(
-                    event_ctx,
-                    reason=ROUTE_EVT_MSG[operation]["failure"],
-                    message=message,
+                kopf.info(
+                    event_ctx, reason=ROUTE_EVT_MSG[operation]["success"], message=message
                 )
-            continue
-
-        status.append(
-            {
-                "destination": route["destination"],
-                "gateway": route["gateway"],
-                "status": ROUTE_READY_MSG,
-            }
-        )
-        if event_ctx is not None:
-            kopf.info(
-                event_ctx, reason=ROUTE_EVT_MSG[operation]["success"], message=message
-            )
+        except Exception as err:
+           logger.error(f"Unexpected {err=}, {type(err)=}")
 
     return status
 
