@@ -1,6 +1,7 @@
 import kopf
 from pyroute2 import IPRoute
 from api.v1.types import StaticRoute
+from constants import DEFAULT_DEPLOYMENT_LABEL
 from constants import DEFAULT_GW_CIDR
 from constants import NOT_USABLE_IP_ADDRESS
 from constants import ROUTE_EVT_MSG
@@ -215,7 +216,7 @@ def resolve_gateway(spec, logger):
             message = f"gateway is empty, attempting to resolve { deploymentlabel }"
             logger.info(message)    
             
-            if not deploymentlabel:
+            if not deploymentlabel or deploymentlabel==DEFAULT_DEPLOYMENT_LABEL:
                 kopf.exception(
                     Exception("deploymentlabel cannot be empty if gateway is empty"),
                     message="deploymentlabel cannot be empty if gateway is empty",

@@ -2,6 +2,8 @@ from dataclasses import dataclass, field
 from apischema import schema
 from typing import NewType
 from ..schema import OpenAPIV3Schema
+from constants import DEFAULT_GW_CIDR
+from constants import DEFAULT_DEPLOYMENT_LABEL
 
 
 # Static route API representation
@@ -15,7 +17,7 @@ class StaticRoute(OpenAPIV3Schema):
     __version__ = "v1"
     __scope__ = "Cluster"
     __short_names__ = ["sr"]
-
+    required = ["destinations"]
     __additional_printer_columns__ = [
         {
             "name": "Age",
@@ -57,14 +59,16 @@ class StaticRoute(OpenAPIV3Schema):
         )
     )
     gateway: str = field(
+        default=DEFAULT_GW_CIDR,
         metadata=schema(
             description="Gateway to route through",
             pattern="^([0-9]{1,3}\.){3}[0-9]{1,3}$",
         )
     )
     deploymentlabel: str = field(
+        default=DEFAULT_DEPLOYMENT_LABEL,
         metadata=schema(
             description="Label to discover deployment pods to route through instead of a dedicated Gateway",
-            pattern="^([a-z0-9\.]+)$",
+            pattern="^([a-z0-9\.\-]+)$",
         )
     )
