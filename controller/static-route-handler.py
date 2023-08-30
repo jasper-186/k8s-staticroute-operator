@@ -122,7 +122,17 @@ def create_fn(body, spec, logger, **_):
         gateway = spec["gateway"]
 
     if not gateway or gateway==NOT_USABLE_IP_ADDRESS:
+        logger.info(f"in create_fn attempting to resolve gateway")
         gateway = resolve_gateway(spec,logger)
+    
+    logger.info(f"in create_fn gateway resolve to {gateway}")  
+
+    if gateway==NOT_USABLE_IP_ADDRESS:
+        kopf.exception(
+                    Exception("Cannot apply route with gateway 0.0.0.0"),
+                    message="Cannot apply route with gateway 0.0.0.0",
+                )
+        return (False, "Failed to apply static route, see log for issues")
     
     routes_to_add_spec = [
         {"destination": destination, "gateway": gateway} for destination in destinations
@@ -206,11 +216,11 @@ def delete(body, spec, logger, **_):
     )
 
 def resolve_gateway(spec, logger):
-    gateway = None
+    gateway = NOT_USABLE_IP_ADDRESS
     if "gateway" in spec:
         gateway=spec["gateway"]
 
-    if not gateway:
+    if gateway == NOT_USABLE_IP_ADDRESS:
         try:
             deploymentlabel=spec["deploymentlabel"]
             message = f"gateway is empty, attempting to resolve { deploymentlabel }"
@@ -241,7 +251,6 @@ def resolve_gateway(spec, logger):
         except client.exceptions.ApiException as e:
             message = f"Exception resolving service ip: {e}"
             logger.error(message)    
-            print(f'Invalid hostname, error raised is {e}')
-            gateway=NOT_USABLE_IP_ADDRESS
+            print(f'Invalid hostname, error raised is {e}')            
     
     return gateway
