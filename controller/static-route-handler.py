@@ -59,8 +59,8 @@ def process_static_routes(routes, operation, event_ctx=None, logger=None):
     status = []
 
     for route in routes:
-       try:
-           dest=route["destination"]
+        try:
+            dest=route["destination"]
             gate=route["gateway"]
             message = f"processing route {dest} via {gate}!"
             logger.info(message)
@@ -120,7 +120,7 @@ def create_fn(body, spec, logger, **_):
     if "gateway" in spec:
         gateway = spec["gateway"]
 
-    if not gateway:
+    if not gateway or gateway==DEFAULT_GW_CIDR:
         gateway = resolve_gateway(spec,logger)
     
     routes_to_add_spec = [
@@ -145,14 +145,14 @@ def update_fn(body, old, new, logger, **_):
     if "gateway" in old["spec"]:
         old_gateway = old["spec"]["gateway"]
         
-    if not old_gateway:
+    if not old_gateway or old_gateway==DEFAULT_GW_CIDR:
         old_gateway = resolve_gateway(old["spec"],logger)
 
     new_gateway = None
     if "gateway" in new["spec"]:
         new_gateway = new["spec"]["gateway"]
 
-    if not new_gateway:
+    if not new_gateway or new_gateway==DEFAULT_GW_CIDR:
         new_gateway = resolve_gateway(new["spec"],logger)
     
     old_destinations = old["spec"].get("destinations", [])
@@ -193,7 +193,7 @@ def delete(body, spec, logger, **_):
     if "gateway" in spec:
         gateway = spec["gateway"]
 
-    if not gateway:
+    if not gateway or gateway==DEFAULT_GW_CIDR:
         gateway = resolve_gateway(spec,logger)
     
     routes_to_delete_spec = [
