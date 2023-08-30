@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from apischema import schema
 from typing import NewType
 from ..schema import OpenAPIV3Schema
-from constants import DEFAULT_GW_CIDR
+from constants import NOT_USABLE_IP_ADDRESS
 from constants import DEFAULT_DEPLOYMENT_LABEL
 
 
@@ -59,7 +59,7 @@ class StaticRoute(OpenAPIV3Schema):
         )
     )
     gateway: str = field(
-        default=DEFAULT_GW_CIDR,
+        default=NOT_USABLE_IP_ADDRESS,
         metadata=schema(
             description="Gateway to route through",
             pattern="^([0-9]{1,3}\.){3}[0-9]{1,3}$",

@@ -121,7 +121,7 @@ def create_fn(body, spec, logger, **_):
     if "gateway" in spec:
         gateway = spec["gateway"]
 
-    if not gateway or gateway==DEFAULT_GW_CIDR:
+    if not gateway or gateway==NOT_USABLE_IP_ADDRESS:
         gateway = resolve_gateway(spec,logger)
     
     routes_to_add_spec = [
@@ -146,14 +146,14 @@ def update_fn(body, old, new, logger, **_):
     if "gateway" in old["spec"]:
         old_gateway = old["spec"]["gateway"]
         
-    if not old_gateway or old_gateway==DEFAULT_GW_CIDR:
+    if not old_gateway or old_gateway==NOT_USABLE_IP_ADDRESS:
         old_gateway = resolve_gateway(old["spec"],logger)
 
     new_gateway = None
     if "gateway" in new["spec"]:
         new_gateway = new["spec"]["gateway"]
 
-    if not new_gateway or new_gateway==DEFAULT_GW_CIDR:
+    if not new_gateway or new_gateway==NOT_USABLE_IP_ADDRESS:
         new_gateway = resolve_gateway(new["spec"],logger)
     
     old_destinations = old["spec"].get("destinations", [])
@@ -194,7 +194,7 @@ def delete(body, spec, logger, **_):
     if "gateway" in spec:
         gateway = spec["gateway"]
 
-    if not gateway or gateway==DEFAULT_GW_CIDR:
+    if not gateway or gateway==NOT_USABLE_IP_ADDRESS:
         gateway = resolve_gateway(spec,logger)
     
     routes_to_delete_spec = [
@@ -242,6 +242,6 @@ def resolve_gateway(spec, logger):
             message = f"Exception resolving service ip: {e}"
             logger.error(message)    
             print(f'Invalid hostname, error raised is {e}')
-            gateway=DEFAULT_GW_CIDR
+            gateway=NOT_USABLE_IP_ADDRESS
     
     return gateway
