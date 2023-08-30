@@ -59,14 +59,14 @@ class StaticRoute(OpenAPIV3Schema):
         )
     )
     gateway: str = field(
-        default=NOT_USABLE_IP_ADDRESS,
+        default_factory=lambda: NOT_USABLE_IP_ADDRESS,
         metadata=schema(
             description="Gateway to route through",
             pattern="^([0-9]{1,3}\.){3}[0-9]{1,3}$",
         )
     )
     deploymentlabel: str = field(
-        default=DEFAULT_DEPLOYMENT_LABEL,
+        default_factory=lambda: DEFAULT_DEPLOYMENT_LABEL,
         metadata=schema(
             description="Label to discover deployment pods to route through instead of a dedicated Gateway",
             pattern="^([a-z0-9\.\-]+)$",
