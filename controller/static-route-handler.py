@@ -246,7 +246,7 @@ def resolve_gateway(spec, logger):
                 logger.warn(f"Multiple Services for {deploymentlabel} taking first in list")
 
             # Route the traffic for the network to the Pods IP (which the node has a route for)
-            gateway = pod_wireguard.items[0].status.pod_ip
+            gateway = pod_wireguard.items[0].status.pod_ip + " dev flannel.1 onlink"
 
         except client.exceptions.ApiException as e:
             message = f"Exception resolving service ip: {e}"
