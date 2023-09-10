@@ -1,5 +1,6 @@
 import kopf
 from pyroute2 import IPRoute
+from pyroute2 import NDB
 from api.v1.types import StaticRoute
 from constants import DEFAULT_DEPLOYMENT_LABEL
 from constants import DEFAULT_GW_CIDR
@@ -40,18 +41,27 @@ def manage_static_route(operation, destination, gateway, logger=None):
             logger.error(message)
         return (False, message)
 
-    with IPRoute() as ipr:
-        try:
-            ipr.route(operation, dst=destination, gateway=gateway)
-            operation_success = True
-            message = f"Success - Dest: {destination}, gateway: {gateway}, operation: {operation}."
-            if logger is not None:
-                logger.info(message)
-        except Exception as ex:
-            operation_success = False
-            message = f"Route {operation} failed! Error message: {ex}"
-            if logger is not None:
-                logger.error(message)
+    with NDB() as ndb:
+        if operation == 'add':
+            ndb.routes.add({'dst': destination, 'multipath': [{'gateway': gateway, 'hops': 1}]})
+        if operation == 'del':
+            with ndb.routes[destination] as r:
+                r.remove()
+        #TODO impliment a Change and Replace(add+change) operator  
+        
+    # with IPRoute() as ipr:
+    #     try:
+    #         # dev flannel.1 onlink
+    #         ipr.route(operation, dst=destination, gateway=gateway, )
+    #         operation_success = True
+    #         message = f"Success - Dest: {destination}, gateway: {gateway}, operation: {operation}."
+    #         if logger is not None:
+    #             logger.info(message)
+    #     except Exception as ex:
+    #         operation_success = False
+    #         message = f"Route {operation} failed! Error message: {ex}"
+    #         if logger is not None:
+    #             logger.error(message)
 
     return (operation_success, message)
 
@@ -246,7 +256,7 @@ def resolve_gateway(spec, logger):
                 logger.warn(f"Multiple Services for {deploymentlabel} taking first in list")
 
             # Route the traffic for the network to the Pods IP (which the node has a route for)
-            gateway = pod_wireguard.items[0].status.pod_ip + " dev flannel.1 onlink"
+            gateway = pod_wireguard.items[0].status.pod_ip 
 
         except client.exceptions.ApiException as e:
             message = f"Exception resolving service ip: {e}"
