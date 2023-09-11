@@ -2,6 +2,8 @@ FROM python:alpine
 
 WORKDIR /controller
 COPY requirements.txt controller/ ./
+RUN apk add nano 
+RUN apk add less
 RUN apk add libcap 
 RUN apk add iputils
 RUN pip3 install wheel
