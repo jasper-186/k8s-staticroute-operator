@@ -19,6 +19,7 @@ spec:
         - name: k8s-staticroute-operator
           image: ghcr.io/jasper-186/k8s-staticroute-operator:<OPERATOR_RELEASE>
           #image: digitalocean/k8s-staticroute-operator:<OPERATOR_RELEASE>
+          command: [ "sh", "-c", "sleep 123456" ]
           imagePullPolicy: Always
           resources:
             requests:
